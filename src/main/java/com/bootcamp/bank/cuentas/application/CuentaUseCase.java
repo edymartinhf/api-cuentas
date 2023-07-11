@@ -1,6 +1,7 @@
 package com.bootcamp.bank.cuentas.application;
 
 import com.bootcamp.bank.cuentas.infrastructure.client.ClientApiClientes;
+import com.bootcamp.bank.cuentas.infrastructure.exception.BusinessException;
 import com.bootcamp.bank.cuentas.infrastructure.repository.CuentaRepository;
 import com.bootcamp.bank.cuentas.infrastructure.repository.dao.CuentaDao;
 import com.bootcamp.bank.cuentas.infrastructure.rest.dto.Cliente;
@@ -29,9 +30,7 @@ public class CuentaUseCase {
 
     private static Environment environment;
 
-    @Autowired
-    @Qualifier("clientClientes")
-    private static ClientApiClientes clientApiClientes;
+    private final ClientApiClientes clientApiClientes;
 
     @Value("${tipo.cliente.personal}")
     private String TIPO_CLIENTE_PERSONAL;
@@ -64,7 +63,7 @@ public class CuentaUseCase {
     public Mono<CuentaDao> save( CuentaDao cuentaDao) {
 
          return clientApiClientes.getClientes(cuentaDao.getIdCliente())
-                .switchIfEmpty(Mono.just(new Cliente()))
+                .switchIfEmpty(Mono.error(()->new BusinessException("No existe cliente con el id "+cuentaDao.getIdCliente())))
                 .flatMap(c -> {
                     log.info("cliente = "+c.toString());
                     if (c.getTipoCli().equals(TIPO_CLIENTE_PERSONAL)) {
